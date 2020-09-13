@@ -4,6 +4,7 @@ from PIL import Image, ImageEnhance, ImageFilter, ImageFont, ImageDraw
 
 from opsys import operating_systems
 
+
 class Stats:
     stats_file = 'log.txt'
     message = ''
@@ -39,6 +40,7 @@ class Output:
 
     name = None
     name_size = 48
+    name_chunk = 13
 
     os_logo = None
 
@@ -115,6 +117,15 @@ def analize_args():
 
     if args.name:
         output.name = args.name.split('/')
+        tmp = []
+        for chunk in output.name:
+            tmp += [chunk[i:i+output.name_chunk]
+                    for i in range(0, len(chunk), output.name_chunk)]
+        output.name = tmp
+
+        if len(output.name) > 2:
+            print('Name is too long!')
+            exit(1)
 
     if args.serial:
         if len(args.serial) >= 30:
@@ -124,7 +135,7 @@ def analize_args():
             output.serial = [args.serial]
 
         if len(output.serial) > 3:
-            print("Serial is too long!")
+            print('Serial is too long!')
             exit(1)
 
     if args.operating_system:
@@ -229,6 +240,10 @@ def stickerize(qr):
 
     output.dimensions.height = h
     output.dimensions.width = w*3
+    output.padding = int(output.dimensions.height * 0.01)
+    print(output.padding)
+    if output.padding == 0:
+        output.padding = 1
 
     output.name_size = int(h / 4)
     output.serial_size = int(h / 8)
@@ -300,13 +315,13 @@ def stickerize(qr):
     bg = Image.new(
         mode='RGB',
         size=(output.dimensions.width + 2*output.padding,
-              output.dimensions.height + output.padding),
+              output.dimensions.height + 2*output.padding),
         color=(0, 0, 0)
     )
 
-    bg.paste(sticker, (1, 1))
+    bg.paste(sticker, (output.padding, output.padding))
 
-    return sticker
+    return bg
 
 
 def main():
@@ -320,5 +335,5 @@ def main():
 
 if __name__ == '__main__':
     main()
-    
+
     stats.save()
